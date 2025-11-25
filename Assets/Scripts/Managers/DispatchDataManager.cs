@@ -16,8 +16,14 @@ namespace DispatchQuest.Managers
         public Vector2 MapMin = Vector2.zero;
         public Vector2 MapMax = new(100f, 100f);
 
+        [Header("Workload Thresholds (hours)")]
+        [SerializeField] private float workloadLowThreshold = 4f;
+        [SerializeField] private float workloadHighThreshold = 8f;
+
         public event Action<JobTicket, Technician> OnJobAssigned;
         public event Action OnDataChanged;
+        public event Action OnWorkloadChanged;
+        public event Action OnRoutesGenerated;
 
         private static readonly string[] TechnicianNames =
         {
@@ -37,10 +43,14 @@ namespace DispatchQuest.Managers
 
         private static readonly string[] Skills = { "Electrical", "HVAC", "Plumbing", "IT" };
 
+        public float WorkloadLowThreshold => workloadLowThreshold;
+        public float WorkloadHighThreshold => workloadHighThreshold;
+
         private void Awake()
         {
             GenerateDummyData();
             OnDataChanged?.Invoke();
+            OnWorkloadChanged?.Invoke();
         }
 
         public void GenerateDummyData()
@@ -114,12 +124,31 @@ namespace DispatchQuest.Managers
 
             technician.AssignJob(job);
             OnJobAssigned?.Invoke(job, technician);
-            OnDataChanged?.Invoke();
+            NotifyDataChanged();
+            OnWorkloadChanged?.Invoke();
+        }
+
+        public float GetTechnicianWorkloadHours(Technician tech)
+        {
+            if (tech == null) return 0f;
+            return tech.AssignedJobs.Where(j => j != null && j.Status != JobStatus.Completed)
+                .Sum(j => j.EstimatedDurationHours);
         }
 
         public List<JobTicket> GetUnassignedJobs()
         {
             return Jobs.Where(j => j.Status == JobStatus.Unassigned).ToList();
+        }
+
+        public void NotifyRoutesGenerated()
+        {
+            OnRoutesGenerated?.Invoke();
+            OnWorkloadChanged?.Invoke();
+        }
+
+        public void NotifyDataChanged()
+        {
+            OnDataChanged?.Invoke();
         }
     }
 }

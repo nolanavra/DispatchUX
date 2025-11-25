@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DispatchQuest.Managers;
 using DispatchQuest.Data;
+using DispatchQuest.Services;
 using UnityEngine;
 
 namespace DispatchQuest.UI
@@ -11,6 +12,9 @@ namespace DispatchQuest.UI
         public GameObject JobCardPrefab;
         public RectTransform ContentRoot;
         public Canvas RootCanvas;
+        public JobRecommendationService RecommendationService;
+        public TechnicianHighlightController HighlightController;
+        public CommunicationPanelUI CommunicationPanel;
 
         private readonly List<JobCardUI> _spawnedCards = new();
 
@@ -57,6 +61,9 @@ namespace DispatchQuest.UI
                 GameObject go = Instantiate(JobCardPrefab, ContentRoot);
                 JobCardUI card = go.GetComponent<JobCardUI>();
                 card.RootCanvas = RootCanvas;
+                card.RecommendationService = RecommendationService;
+                card.HighlightController = HighlightController;
+                card.CommunicationPanel = CommunicationPanel;
                 card.Bind(job, DataManager);
                 _spawnedCards.Add(card);
             }
