@@ -2,6 +2,7 @@ using DispatchQuest.Data;
 using DispatchQuest.Managers;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using TMPro;
 using UnityEngine.UI;
 
 namespace DispatchQuest.UI
@@ -9,11 +10,11 @@ namespace DispatchQuest.UI
     public class JobCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         [Header("UI References")]
-        public Text TitleText;
-        public Text ClientText;
-        public Text PriorityText;
-        public Text DurationText;
-        public Text SkillsText;
+        public TMP_Text TitleText;
+        public TMP_Text ClientText;
+        public TMP_Text PriorityText;
+        public TMP_Text DurationText;
+        public TMP_Text SkillsText;
         public Image Background;
 
         [Header("Settings")]

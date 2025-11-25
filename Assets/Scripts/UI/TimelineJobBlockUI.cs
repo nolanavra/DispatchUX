@@ -1,4 +1,5 @@
 using DispatchQuest.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,8 +7,8 @@ namespace DispatchQuest.UI
 {
     public class TimelineJobBlockUI : MonoBehaviour
     {
-        public Text TitleText;
-        public Text DurationText;
+        public TMP_Text TitleText;
+        public TMP_Text DurationText;
         public Image Background;
 
         public Color NormalColor = new(0.3f, 0.45f, 0.75f, 0.9f);

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DispatchQuest.Data;
 using DispatchQuest.Managers;
+using TMPro;
 using UnityEngine;
 
 namespace DispatchQuest.UI
@@ -60,7 +61,7 @@ namespace DispatchQuest.UI
                 var label = row.transform.Find("TechLabel");
                 if (label != null)
                 {
-                    var text = label.GetComponent<UnityEngine.UI.Text>();
+                    var text = label.GetComponent<TMP_Text>();
                     if (text != null) text.text = tech.Name;
                 }
 

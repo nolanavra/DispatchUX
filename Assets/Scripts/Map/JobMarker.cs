@@ -1,4 +1,5 @@
 using DispatchQuest.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,7 +7,7 @@ namespace DispatchQuest.Map
 {
     public class JobMarker : MonoBehaviour
     {
-        public Text LabelText;
+        public TMP_Text LabelText;
         public Image Icon;
         public Color UnassignedColor = new(0.6f, 0.6f, 0.2f, 0.9f);
         public Color AssignedColor = new(0.2f, 0.7f, 0.25f, 0.9f);

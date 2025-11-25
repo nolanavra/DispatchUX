@@ -1,6 +1,7 @@
 using System.Linq;
 using DispatchQuest.Data;
 using DispatchQuest.Managers;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -10,9 +11,9 @@ namespace DispatchQuest.UI
     public class TechnicianCardUI : MonoBehaviour, IDropHandler
     {
         [Header("UI References")]
-        public Text NameText;
-        public Text SkillsText;
-        public Text StatusText;
+        public TMP_Text NameText;
+        public TMP_Text SkillsText;
+        public TMP_Text StatusText;
         public Image Background;
 
         public Color AvailableColor = new(0.2f, 0.4f, 0.2f, 0.85f);
