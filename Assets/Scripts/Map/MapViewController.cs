@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using DispatchQuest.Data;
 using DispatchQuest.Managers;
 using UnityEngine;
@@ -14,6 +15,8 @@ namespace DispatchQuest.Map
 
         private readonly List<TechnicianMarker> _techMarkers = new();
         private readonly List<JobMarker> _jobMarkers = new();
+
+        public IReadOnlyList<TechnicianMarker> TechnicianMarkers => _techMarkers;
 
         private void Start()
         {
@@ -39,7 +42,7 @@ namespace DispatchQuest.Map
             RefreshMarkers();
         }
 
-        private void BuildMarkers()
+        public void BuildMarkers()
         {
             if (DataManager == null || MapArea == null || TechnicianMarkerPrefab == null || JobMarkerPrefab == null) return;
             ClearMarkers();
@@ -63,7 +66,7 @@ namespace DispatchQuest.Map
             }
         }
 
-        private void RefreshMarkers()
+        public void RefreshMarkers()
         {
             if (_techMarkers.Count == 0 && _jobMarkers.Count == 0)
             {
@@ -81,6 +84,16 @@ namespace DispatchQuest.Map
             {
                 marker.Refresh();
                 SetMarkerPosition(marker.GetComponent<RectTransform>(), marker.Job.MapPosition);
+            }
+        }
+
+        public void HighlightTechnicians(IEnumerable<Technician> technicians)
+        {
+            var set = technicians != null ? new HashSet<Technician>(technicians) : new HashSet<Technician>();
+            foreach (var marker in _techMarkers)
+            {
+                bool highlight = marker != null && set.Contains(marker.Technician);
+                marker?.SetHighlighted(highlight);
             }
         }
 

@@ -15,9 +15,12 @@ namespace DispatchQuest.Map
         public Color AvailableColor = new(0.2f, 0.5f, 0.2f, 0.9f);
         public Color BusyColor = new(0.6f, 0.35f, 0.2f, 0.9f);
         public Color OffShiftColor = new(0.4f, 0.4f, 0.4f, 0.9f);
+        public Color HighlightColor = new(0.9f, 0.85f, 0.3f, 0.95f);
 
         [HideInInspector] public Technician Technician;
         [HideInInspector] public DispatchDataManager DataManager;
+
+        private Color _baseColor;
 
         public void Bind(Technician technician, DispatchDataManager dataManager)
         {
@@ -36,14 +39,21 @@ namespace DispatchQuest.Map
 
             if (Icon != null)
             {
-                Icon.color = Technician.Status switch
+                _baseColor = Technician.Status switch
                 {
                     TechnicianStatus.Available => AvailableColor,
                     TechnicianStatus.Busy => BusyColor,
                     TechnicianStatus.OffShift => OffShiftColor,
                     _ => Icon.color
                 };
+                Icon.color = _baseColor;
             }
+        }
+
+        public void SetHighlighted(bool highlighted)
+        {
+            if (Icon == null) return;
+            Icon.color = highlighted ? HighlightColor : _baseColor;
         }
 
         public void OnDrop(PointerEventData eventData)
