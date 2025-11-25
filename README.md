@@ -49,3 +49,24 @@ A Unity 2D desktop-focused dispatch tool prototype with a strategy-UI aesthetic.
 ## Notes
 - All text components should be **TextMeshProUGUI**.
 - No persistence is implemented; data resets each Play session.
+
+## Phase 2 Wiring (Workload, Recommendations, Notes, Routes)
+1. **Workload Balance Meter**
+   - Add a small bar (Image + TMP label) inside the Technician Card prefab and attach `TechnicianWorkloadMeterUI` to it.
+   - Assign the meter’s **FillImage** and **WorkloadLabel** fields, then assign the meter to `TechnicianCardUI.WorkloadMeter` so it binds to `DispatchDataManager` and refreshes from workload events.
+
+2. **Communication Panel**
+   - Create a reusable panel with header text, scrollable notes content (using a simple text prefab), input field, and Add/Close buttons.
+   - Attach `CommunicationPanelUI` to the panel root and wire **PanelRoot**, **HeaderText**, **NotesContentRoot**, **NoteEntryPrefab**, **InputField**, **AddNoteButton**, and **CloseButton**.
+   - On the Technician Card prefab, add a “Notes” button hooked to `TechnicianCardUI.NotesButton` and assign the shared `CommunicationPanelUI` reference inside `TechnicianListUIController`.
+   - On the Job Card prefab, add a “Notes” button hooked to `JobCardUI.NotesButton` and assign the same panel reference in `JobListUIController`.
+
+3. **Job Recommendations & Highlighting**
+   - Place a `JobRecommendationService` in the scene and assign **DispatchDataManager**.
+   - Add `TechnicianHighlightController` in the scene, assigning both the `TechnicianListUIController` (for card highlights) and `MapViewController` (for marker highlights).
+   - Add a “Recommend” button to the Job Card prefab, wire it to `JobCardUI.RecommendButton`, and in `JobListUIController` set **RecommendationService** and **HighlightController** so clicks highlight the suggested technicians.
+
+4. **Auto-Generated Daily Routes**
+   - Add `RoutePlannerService` to the scene and assign **DispatchDataManager**.
+   - Create a UI button labeled “Generate Daily Routes”; attach `RoutePlanningController` to the same GameObject, assign **routePlannerService** (and optionally a `TechnicianHighlightController` to clear highlights), then wire the button’s OnClick to `RoutePlanningController.GenerateRoutes`.
+   - Ensure `TimelineUIController` is already referencing **DispatchDataManager**, row/job prefabs, and content root; it will reorder jobs when `DispatchDataManager.OnRoutesGenerated` fires after route planning.
