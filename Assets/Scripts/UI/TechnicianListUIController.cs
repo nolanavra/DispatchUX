@@ -10,8 +10,11 @@ namespace DispatchQuest.UI
         public DispatchDataManager DataManager;
         public GameObject TechnicianCardPrefab;
         public RectTransform ContentRoot;
+        public CommunicationPanelUI CommunicationPanel;
 
         private readonly List<TechnicianCardUI> _spawnedCards = new();
+
+        public IReadOnlyList<TechnicianCardUI> SpawnedCards => _spawnedCards;
 
         private void Start()
         {
@@ -20,6 +23,8 @@ namespace DispatchQuest.UI
             {
                 DataManager.OnJobAssigned += HandleJobAssigned;
                 DataManager.OnDataChanged += RefreshList;
+                DataManager.OnWorkloadChanged += RefreshCardsOnly;
+                DataManager.OnRoutesGenerated += RefreshCardsOnly;
             }
         }
 
@@ -29,12 +34,22 @@ namespace DispatchQuest.UI
             {
                 DataManager.OnJobAssigned -= HandleJobAssigned;
                 DataManager.OnDataChanged -= RefreshList;
+                DataManager.OnWorkloadChanged -= RefreshCardsOnly;
+                DataManager.OnRoutesGenerated -= RefreshCardsOnly;
             }
         }
 
         private void HandleJobAssigned(JobTicket job, Technician technician)
         {
             RefreshList();
+        }
+
+        private void RefreshCardsOnly()
+        {
+            foreach (var card in _spawnedCards)
+            {
+                card?.Refresh();
+            }
         }
 
         public void RefreshList()
@@ -54,6 +69,7 @@ namespace DispatchQuest.UI
             {
                 GameObject go = Instantiate(TechnicianCardPrefab, ContentRoot);
                 TechnicianCardUI card = go.GetComponent<TechnicianCardUI>();
+                card.CommunicationPanel = CommunicationPanel;
                 card.Bind(tech, DataManager);
                 _spawnedCards.Add(card);
             }

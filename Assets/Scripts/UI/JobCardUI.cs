@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
 using UnityEngine.UI;
+using DispatchQuest.Services;
 
 namespace DispatchQuest.UI
 {
@@ -16,6 +17,8 @@ namespace DispatchQuest.UI
         public TMP_Text DurationText;
         public TMP_Text SkillsText;
         public Image Background;
+        public Button RecommendButton;
+        public Button NotesButton;
 
         [Header("Settings")]
         public Color UnassignedColor = new(0.25f, 0.35f, 0.6f, 0.9f);
@@ -24,6 +27,9 @@ namespace DispatchQuest.UI
         [HideInInspector] public JobTicket Job;
         [HideInInspector] public DispatchDataManager DataManager;
         [HideInInspector] public Canvas RootCanvas;
+        [HideInInspector] public JobRecommendationService RecommendationService;
+        [HideInInspector] public TechnicianHighlightController HighlightController;
+        [HideInInspector] public CommunicationPanelUI CommunicationPanel;
 
         private CanvasGroup _canvasGroup;
         private Transform _originalParent;
@@ -33,6 +39,15 @@ namespace DispatchQuest.UI
         {
             _canvasGroup = GetComponent<CanvasGroup>();
             _rectTransform = GetComponent<RectTransform>();
+            if (RecommendButton != null)
+            {
+                RecommendButton.onClick.AddListener(OnRecommendClicked);
+            }
+
+            if (NotesButton != null)
+            {
+                NotesButton.onClick.AddListener(OpenNotes);
+            }
         }
 
         public void Bind(JobTicket job, DispatchDataManager dataManager)
@@ -91,6 +106,19 @@ namespace DispatchQuest.UI
                 eventData.pressEventCamera,
                 out Vector2 localPoint);
             _rectTransform.localPosition = localPoint;
+        }
+
+        private void OnRecommendClicked()
+        {
+            if (RecommendationService == null || HighlightController == null || Job == null) return;
+            var recommendations = RecommendationService.GetRecommendedTechnicians(Job);
+            HighlightController.HighlightTechnicians(recommendations);
+        }
+
+        private void OpenNotes()
+        {
+            if (CommunicationPanel == null || Job == null) return;
+            CommunicationPanel.ShowForJob(Job);
         }
     }
 }

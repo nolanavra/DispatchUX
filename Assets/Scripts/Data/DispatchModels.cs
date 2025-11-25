@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DispatchQuest.Data
@@ -40,6 +41,10 @@ namespace DispatchQuest.Data
         public JobStatus Status = JobStatus.Unassigned;
         public Technician AssignedTechnician;
 
+        public DateTime? ScheduledStartTime;
+        public DateTime? ScheduledEndTime;
+        public List<string> Notes = new();
+
         public void AssignToTechnician(Technician technician)
         {
             AssignedTechnician = technician;
@@ -56,6 +61,10 @@ namespace DispatchQuest.Data
         public Vector2 MapPosition;
         public TechnicianStatus Status = TechnicianStatus.Available;
         public List<JobTicket> AssignedJobs = new();
+        public List<string> Notes = new();
+
+        public float DailyWorkloadHours => AssignedJobs.Where(j => j != null && j.Status != JobStatus.Completed)
+            .Sum(j => j.EstimatedDurationHours);
 
         public void AssignJob(JobTicket job)
         {
@@ -75,6 +84,8 @@ namespace DispatchQuest.Data
             {
                 job.AssignedTechnician = null;
                 job.Status = JobStatus.Unassigned;
+                job.ScheduledStartTime = null;
+                job.ScheduledEndTime = null;
                 if (AssignedJobs.Count == 0 && Status == TechnicianStatus.Busy)
                 {
                     Status = TechnicianStatus.Available;

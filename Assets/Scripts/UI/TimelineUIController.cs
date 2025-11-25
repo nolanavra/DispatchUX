@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using DispatchQuest.Data;
 using DispatchQuest.Managers;
 using TMPro;
@@ -23,6 +24,7 @@ namespace DispatchQuest.UI
             {
                 DataManager.OnJobAssigned += HandleJobAssigned;
                 DataManager.OnDataChanged += BuildTimeline;
+                DataManager.OnRoutesGenerated += BuildTimeline;
             }
         }
 
@@ -32,6 +34,7 @@ namespace DispatchQuest.UI
             {
                 DataManager.OnJobAssigned -= HandleJobAssigned;
                 DataManager.OnDataChanged -= BuildTimeline;
+                DataManager.OnRoutesGenerated -= BuildTimeline;
             }
         }
 
@@ -71,8 +74,16 @@ namespace DispatchQuest.UI
                     : row.transform as RectTransform;
 
                 if (jobRoot == null) continue;
-                foreach (var job in tech.AssignedJobs)
+
+                var orderedJobs = tech.AssignedJobs
+                    .Select((job, index) => new { job, index })
+                    .OrderBy(j => j.job.ScheduledStartTime ?? System.DateTime.MaxValue)
+                    .ThenBy(j => j.index);
+
+                foreach (var wrapper in orderedJobs)
                 {
+                    var job = wrapper.job;
+                    if (job == null) continue;
                     GameObject block = Instantiate(JobBlockPrefab, jobRoot);
                     var blockUI = block.GetComponent<TimelineJobBlockUI>();
                     blockUI.Bind(job);
