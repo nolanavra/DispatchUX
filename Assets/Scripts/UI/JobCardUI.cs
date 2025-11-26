@@ -8,7 +8,7 @@ using DispatchQuest.Services;
 
 namespace DispatchQuest.UI
 {
-    public class JobCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class JobCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
         [Header("UI References")]
         public TMP_Text TitleText;
@@ -19,6 +19,7 @@ namespace DispatchQuest.UI
         public Image Background;
         public Button RecommendButton;
         public Button NotesButton;
+        public JobDetailPanelUI JobDetailPanel;
 
         [Header("Settings")]
         public Color UnassignedColor = new(0.25f, 0.35f, 0.6f, 0.9f);
@@ -119,6 +120,12 @@ namespace DispatchQuest.UI
         {
             if (CommunicationPanel == null || Job == null) return;
             CommunicationPanel.ShowForJob(Job);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (JobDetailPanel == null || Job == null) return;
+            JobDetailPanel.ShowJob(Job);
         }
     }
 }
