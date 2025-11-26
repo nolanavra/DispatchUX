@@ -278,13 +278,13 @@ namespace DispatchQuest.Managers
                     continue;
                 }
 
-                var amenity = cafe.TagLookup != null && cafe.TagLookup.TryGetValue("amenity", out var amenityValue)
-                    ? amenityValue
-                    : null;
+                string amenityValue = null;
+                if (cafe.TagLookup != null)
+                {
+                    cafe.TagLookup.TryGetValue("amenity", out amenityValue);
+                }
 
-                var amenity = cafe.TagLookup != null && cafe.TagLookup.TryGetValue("amenity", out var amenityValue)
-                    ? amenityValue
-                    : null;
+                var amenity = amenityValue;
 
                 JobTicket job = new()
                 {
