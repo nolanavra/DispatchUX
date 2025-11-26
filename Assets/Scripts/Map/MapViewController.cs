@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DispatchQuest.Data;
 using DispatchQuest.Managers;
+using DispatchQuest.UI;
 using UnityEngine;
 
 namespace DispatchQuest.Map
@@ -12,7 +13,11 @@ namespace DispatchQuest.Map
         public RectTransform MapArea;
         public GameObject TechnicianMarkerPrefab;
         public GameObject JobMarkerPrefab;
+        public GameObject SiteMarkerPrefab;
+        public TechnicianDetailPanelUI TechnicianDetailPanel;
+        public JobDetailPanelUI JobDetailPanel;
 
+        private readonly List<SiteMarker> _siteMarkers = new();
         private readonly List<TechnicianMarker> _techMarkers = new();
         private readonly List<JobMarker> _jobMarkers = new();
 
@@ -47,10 +52,13 @@ namespace DispatchQuest.Map
             if (DataManager == null || MapArea == null || TechnicianMarkerPrefab == null || JobMarkerPrefab == null) return;
             ClearMarkers();
 
+            BuildSiteMarkers();
+
             foreach (var tech in DataManager.Technicians)
             {
                 var go = Instantiate(TechnicianMarkerPrefab, MapArea);
                 var marker = go.GetComponent<TechnicianMarker>();
+                marker.SetDetailPanel(TechnicianDetailPanel);
                 marker.Bind(tech, DataManager);
                 _techMarkers.Add(marker);
                 SetMarkerPosition(go.GetComponent<RectTransform>(), tech.MapPosition);
@@ -60,9 +68,30 @@ namespace DispatchQuest.Map
             {
                 var go = Instantiate(JobMarkerPrefab, MapArea);
                 var marker = go.GetComponent<JobMarker>();
+                marker.SetDetailPanel(JobDetailPanel);
                 marker.Bind(job);
                 _jobMarkers.Add(marker);
                 SetMarkerPosition(go.GetComponent<RectTransform>(), job.MapPosition);
+            }
+        }
+
+        private void BuildSiteMarkers()
+        {
+            if (SiteMarkerPrefab == null || MapArea == null || DataManager?.CafePositions == null || DataManager.CafePositions.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var kvp in DataManager.CafePositions)
+            {
+                var go = Instantiate(SiteMarkerPrefab, MapArea);
+                var marker = go.GetComponent<SiteMarker>();
+                if (marker != null)
+                {
+                    marker.Bind(kvp.Key);
+                    _siteMarkers.Add(marker);
+                }
+                SetMarkerPosition(go.GetComponent<RectTransform>(), kvp.Value);
             }
         }
 
@@ -85,6 +114,15 @@ namespace DispatchQuest.Map
                 marker.Refresh();
                 SetMarkerPosition(marker.GetComponent<RectTransform>(), marker.Job.MapPosition);
             }
+
+            foreach (var marker in _siteMarkers)
+            {
+                if (marker == null) continue;
+                if (DataManager.CafePositions.TryGetValue(marker.Cafe, out var pos))
+                {
+                    SetMarkerPosition(marker.GetComponent<RectTransform>(), pos);
+                }
+            }
         }
 
         public void HighlightTechnicians(IEnumerable<Technician> technicians)
@@ -99,6 +137,12 @@ namespace DispatchQuest.Map
 
         private void ClearMarkers()
         {
+            foreach (var marker in _siteMarkers)
+            {
+                if (marker != null) Destroy(marker.gameObject);
+            }
+            _siteMarkers.Clear();
+
             foreach (var marker in _techMarkers)
             {
                 if (marker != null) Destroy(marker.gameObject);
