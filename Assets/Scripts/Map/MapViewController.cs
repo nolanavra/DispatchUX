@@ -16,6 +16,7 @@ namespace DispatchQuest.Map
         public GameObject SiteMarkerPrefab;
         public TechnicianDetailPanelUI TechnicianDetailPanel;
         public JobDetailPanelUI JobDetailPanel;
+        public MapProjectionReporter ProjectionReporter;
 
         private readonly List<SiteMarker> _siteMarkers = new();
         private readonly List<TechnicianMarker> _techMarkers = new();
@@ -31,6 +32,8 @@ namespace DispatchQuest.Map
                 DataManager.OnJobAssigned += HandleJobAssigned;
                 DataManager.OnDataChanged += RefreshMarkers;
             }
+
+            ProjectionReporter?.ReportCorners();
         }
 
         private void OnDestroy()
@@ -123,6 +126,8 @@ namespace DispatchQuest.Map
                     SetMarkerPosition(marker.GetComponent<RectTransform>(), pos);
                 }
             }
+
+            ProjectionReporter?.ReportCorners();
         }
 
         public void HighlightTechnicians(IEnumerable<Technician> technicians)

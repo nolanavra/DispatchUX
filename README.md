@@ -100,3 +100,8 @@ A Unity 2D desktop-focused dispatch tool prototype with a strategy-UI aesthetic.
 ## Real-World Map Seeding
 - When a `CafeDatabaseLoader` is present (or Resources/cafes.json is available), `DispatchDataManager` seeds technicians and jobs from the imported latitude/longitude data and projects every site onto the map with consistent bounds.
 - `MapViewController` now spawns **SiteMarker** instances for every cafe/business entry alongside technician and job markers so the canvas reflects real-world spacing instead of placeholder 0–100 coordinates.
+
+## Map Panel Zoom & Projection
+- Add `MapZoomController` to the Map panel GameObject and assign **MapArea** (the RectTransform that contains markers). Scroll the mouse wheel while the cursor is over the map to scale it in or out.
+- Add `MapProjectionReporter` to the Map panel and assign **DispatchDataManager**, **MapArea**, and an optional TMP text for corner readouts. The reporter surfaces the lat/long of all four panel corners and provides `LatLonToAnchoredPosition` for mapping external data sources to UI positions.
+- In `MapViewController`, link **ProjectionReporter** so corner data stays in sync whenever markers rebuild or bounds change.

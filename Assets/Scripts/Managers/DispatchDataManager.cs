@@ -119,13 +119,18 @@ namespace DispatchQuest.Managers
                 UnityEngine.Random.Range(MapMin.y, MapMax.y));
         }
 
-        private (double lat, double lon) LocalToLatLon(Vector2 mapPosition)
+        public (double lat, double lon) MapToLatLon(Vector2 mapPosition)
         {
             const double earthRadiusMeters = 6371000.0;
             double originLatRad = MapOriginLatitude * Math.PI / 180.0;
             double lat = MapOriginLatitude + (mapPosition.y / earthRadiusMeters) * (180.0 / Math.PI);
             double lon = MapOriginLongitude + (mapPosition.x / (earthRadiusMeters * Math.Cos(originLatRad))) * (180.0 / Math.PI);
             return (lat, lon);
+        }
+
+        public Vector2 LatLonToMapPosition(double latitude, double longitude)
+        {
+            return LatLonMapper.ToLocalXY(MapOriginLatitude, MapOriginLongitude, latitude, longitude);
         }
 
         private List<string> GenerateRandomSkills()
@@ -180,7 +185,7 @@ namespace DispatchQuest.Managers
             for (int i = 0; i < techCount; i++)
             {
                 var mapPos = GenerateRandomPosition();
-                var (lat, lon) = LocalToLatLon(mapPos);
+                var (lat, lon) = MapToLatLon(mapPos);
 
                 Technician tech = new()
                 {
@@ -207,7 +212,7 @@ namespace DispatchQuest.Managers
             for (int i = 0; i < jobCount; i++)
             {
                 var mapPos = GenerateRandomPosition();
-                var (lat, lon) = LocalToLatLon(mapPos);
+                var (lat, lon) = MapToLatLon(mapPos);
 
                 JobTicket job = new()
                 {
