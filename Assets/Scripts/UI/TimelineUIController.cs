@@ -14,6 +14,7 @@ namespace DispatchQuest.UI
         public GameObject TechnicianRowPrefab;
         public GameObject JobBlockPrefab;
         public RectTransform ContentRoot;
+        public JobDetailPanelUI JobDetailPanel;
 
         private readonly List<GameObject> _rows = new();
 
@@ -86,7 +87,7 @@ namespace DispatchQuest.UI
                     if (job == null) continue;
                     GameObject block = Instantiate(JobBlockPrefab, jobRoot);
                     var blockUI = block.GetComponent<TimelineJobBlockUI>();
-                    blockUI.Bind(job);
+                    blockUI.Bind(job, JobDetailPanel);
                 }
             }
         }

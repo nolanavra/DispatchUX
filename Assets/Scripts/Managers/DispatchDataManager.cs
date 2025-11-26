@@ -40,6 +40,16 @@ namespace DispatchQuest.Managers
             "Avery Shields", "Morgan Trent", "Jamie Rivera", "Casey Lin", "Dakota Hale", "Skylar Owens"
         };
 
+        private static readonly string[] TechnicianAddresses =
+        {
+            "123 Harbor Ave", "42 Industrial Way", "88 Grove Street", "15 Skylark Blvd", "9 Summit Road", "210 Riverside Dr"
+        };
+
+        private static readonly string[] TechnicianPhones =
+        {
+            "555-0101", "555-0102", "555-0103", "555-0104", "555-0105", "555-0106"
+        };
+
         private static readonly string[] ClientNames =
         {
             "Northwind", "Acme Corp", "Blue Harbor", "Evergreen", "Redline Logistics", "FutureTech"
@@ -85,8 +95,13 @@ namespace DispatchQuest.Managers
                     Name = name,
                     Skills = GenerateRandomSkills(),
                     MapPosition = GenerateRandomPosition(),
-                    Status = TechnicianStatus.Available
+                    Status = TechnicianStatus.Available,
+                    Address = TechnicianAddresses[UnityEngine.Random.Range(0, TechnicianAddresses.Length)],
+                    Phone = TechnicianPhones[UnityEngine.Random.Range(0, TechnicianPhones.Length)],
+                    PlannedHoursToday = UnityEngine.Random.Range(3f, 9f),
+                    ExpectedHoursToday = UnityEngine.Random.Range(6f, 9f)
                 };
+                tech.EnsureSkillProficiencyEntries();
                 Technicians.Add(tech);
             }
 
@@ -108,8 +123,11 @@ namespace DispatchQuest.Managers
                         RequiredSkills = GenerateRandomSkills(),
                         EstimatedDurationHours = UnityEngine.Random.Range(1f, 6.5f),
                         Priority = (JobPriority)UnityEngine.Random.Range(0, Enum.GetValues(typeof(JobPriority)).Length),
-                        Status = JobStatus.Unassigned
+                        Status = JobStatus.Unassigned,
+                        Address = $"{UnityEngine.Random.Range(10, 999)} Dispatch Lane",
+                        DetailedDescription = "Auto-generated task description for testing."
                     };
+                    job.EnsureRequiredSkillToggles();
                     Jobs.Add(job);
                 }
             }
@@ -233,27 +251,31 @@ namespace DispatchQuest.Managers
                     EstimatedDurationHours = UnityEngine.Random.Range(1f, 6.5f),
                     Priority = (JobPriority)UnityEngine.Random.Range(0, Enum.GetValues(typeof(JobPriority)).Length),
                     Status = JobStatus.Unassigned,
+                    Address = cafe.address,
+                    DetailedDescription = cafe.amenity ?? cafe.name ?? "Maintenance Task",
                     Notes = BuildCafeNotes(cafe)
                 };
+
+                job.EnsureRequiredSkillToggles();
 
                 Jobs.Add(job);
             }
         }
 
-        private List<string> BuildCafeNotes(Cafe cafe)
+        private List<JobNote> BuildCafeNotes(Cafe cafe)
         {
-            var notes = new List<string>();
+            var notes = new List<JobNote>();
             if (!string.IsNullOrWhiteSpace(cafe.address))
             {
-                notes.Add(cafe.address);
+                notes.Add(new JobNote { author = "Data Import", text = cafe.address, timestamp = DateTime.Now });
             }
             if (!string.IsNullOrWhiteSpace(cafe.city))
             {
-                notes.Add(cafe.city);
+                notes.Add(new JobNote { author = "Data Import", text = cafe.city, timestamp = DateTime.Now });
             }
             if (!string.IsNullOrWhiteSpace(cafe.postcode))
             {
-                notes.Add(cafe.postcode);
+                notes.Add(new JobNote { author = "Data Import", text = cafe.postcode, timestamp = DateTime.Now });
             }
             return notes;
         }
