@@ -282,6 +282,10 @@ namespace DispatchQuest.Managers
                     ? amenityValue
                     : null;
 
+                var amenity = cafe.TagLookup != null && cafe.TagLookup.TryGetValue("amenity", out var amenityValue)
+                    ? amenityValue
+                    : null;
+
                 JobTicket job = new()
                 {
                     Id = Guid.NewGuid().ToString(),
