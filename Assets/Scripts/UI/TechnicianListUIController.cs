@@ -11,6 +11,7 @@ namespace DispatchQuest.UI
         public GameObject TechnicianCardPrefab;
         public RectTransform ContentRoot;
         public CommunicationPanelUI CommunicationPanel;
+        public TechnicianDetailPanelUI TechnicianDetailPanel;
 
         private readonly List<TechnicianCardUI> _spawnedCards = new();
 
@@ -70,6 +71,7 @@ namespace DispatchQuest.UI
                 GameObject go = Instantiate(TechnicianCardPrefab, ContentRoot);
                 TechnicianCardUI card = go.GetComponent<TechnicianCardUI>();
                 card.CommunicationPanel = CommunicationPanel;
+                card.TechnicianDetailPanel = TechnicianDetailPanel;
                 card.Bind(tech, DataManager);
                 _spawnedCards.Add(card);
             }
