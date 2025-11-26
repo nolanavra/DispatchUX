@@ -36,6 +36,14 @@ A Unity 2D desktop-focused dispatch tool prototype with a strategy-UI aesthetic.
    - Add `CafeDatabaseLoader` to the scene (or Resources) so cafe/business JSON is available at runtime.
    - Add `MapViewController` to the map panel. Assign **DispatchDataManager**, **MapArea** (RectTransform of panel), and all three marker prefabs (site, technician, job). The controller now projects every cafe/business from the dataset plus generated technicians and jobs using their latitude/longitude so map positions match real-world spacing.
 
+### Offline raster basemap (StreamingAssets)
+- Run `python fetch_tiles.py` (see `Docs/OfflineTilePipeline.md`) to prefetch XYZ tiles into a local folder structure `z/x/y.png` from a licensed/self-hosted server.
+- Copy the downloaded folders into `Assets/StreamingAssets/MapTiles/` (or adjust `tilesRoot` on the provider to match your path).
+- Create a **Tile Prefab** (Quad or Sprite) with an unlit material that uses `_MainTex`.
+- Add an empty `OfflineMapRoot` GameObject and attach `LocalMapTileProvider`, `LocalMapTileCache`, and `OfflineMapController` from `Assets/Scripts/MapSDK/`.
+- Wire references: set **tileCache.tileProvider**, **mapController.tileCache**, and **mapController.tilePrefab**, then tune `visibleRadiusInTiles`, `worldUnitsPerTile`, `centerLat`, `centerLon`, and `zoom`.
+- Enter Play to render the offline basemap with no runtime network calls.
+
 6. **Timeline Panel**
    - Create **Technician Row** prefab containing a `TechLabel` TMP text and a `Jobs` container with Horizontal Layout Group.
    - Create **Job Block** prefab with background Image and TMP texts for title and duration; attach `TimelineJobBlockUI`.
