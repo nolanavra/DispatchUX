@@ -241,6 +241,10 @@ namespace DispatchQuest.Managers
                 var jitter = UnityEngine.Random.insideUnitCircle * cafeLocationJitterMeters;
                 Vector2 finalPosition = mapPosition + jitter;
 
+                var amenity = cafe.TagLookup != null && cafe.TagLookup.TryGetValue("amenity", out var amenityValue)
+                    ? amenityValue
+                    : null;
+
                 JobTicket job = new()
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -252,7 +256,9 @@ namespace DispatchQuest.Managers
                     Priority = (JobPriority)UnityEngine.Random.Range(0, Enum.GetValues(typeof(JobPriority)).Length),
                     Status = JobStatus.Unassigned,
                     Address = cafe.address,
-                    DetailedDescription = cafe.amenity ?? cafe.name ?? "Maintenance Task",
+                    DetailedDescription = !string.IsNullOrWhiteSpace(amenity)
+                        ? amenity
+                        : cafe.name ?? cafe.brand ?? "Maintenance Task",
                     Notes = BuildCafeNotes(cafe)
                 };
 
