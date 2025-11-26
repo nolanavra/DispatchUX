@@ -58,6 +58,8 @@ namespace DispatchQuest.Data
         public string Title;
         public string ClientName;
         public Vector2 MapPosition;
+        public double Latitude;
+        public double Longitude;
         public List<string> RequiredSkills = new();
         public float EstimatedDurationHours;
         public JobPriority Priority;
@@ -125,6 +127,8 @@ namespace DispatchQuest.Data
         public string Name;
         public List<string> Skills = new();
         public Vector2 MapPosition;
+        public double Latitude;
+        public double Longitude;
         public TechnicianStatus Status = TechnicianStatus.Available;
         public List<JobTicket> AssignedJobs = new();
         public List<JobNote> Notes = new();

@@ -17,14 +17,22 @@ namespace DispatchQuest.Managers
         [SerializeField] private CafeDatabaseLoader cafeLoader;
         [SerializeField] [Tooltip("Maximum number of jobs to pull from the cafe dataset.")]
         private int maxCafeJobs = 12;
-        [SerializeField] [Tooltip("Meters of jitter applied so overlapping cafes do not stack markers.")]
-        private float cafeLocationJitterMeters = 30f;
         [SerializeField] [Tooltip("Extra padding applied around cafe bounds to keep markers on-screen.")]
         private float cafeBoundsPaddingMeters = 75f;
 
         [Header("Map Bounds")]
         public Vector2 MapMin = Vector2.zero;
         public Vector2 MapMax = new(100f, 100f);
+
+        [Header("Map Projection")]
+        [SerializeField] private double fallbackOriginLatitude = 42.8864; // Buffalo-ish default
+        [SerializeField] private double fallbackOriginLongitude = -78.8784;
+        public double MapOriginLatitude { get; private set; }
+        public double MapOriginLongitude { get; private set; }
+
+        private Dictionary<Cafe, Vector2> cafePositions = new();
+        public IReadOnlyDictionary<Cafe, Vector2> CafePositions => cafePositions;
+        public List<Cafe> CafeSites { get; private set; } = new();
 
         [Header("Workload Thresholds (hours)")]
         [SerializeField] private float workloadLowThreshold = 4f;
@@ -78,58 +86,29 @@ namespace DispatchQuest.Managers
             Technicians.Clear();
             Jobs.Clear();
 
-            var hasCafeData = TryGetCafeJobCandidates(out var cafeJobs, out var cafePositions);
+            CafeSites = new List<Cafe>();
+            cafePositions = new Dictionary<Cafe, Vector2>();
+
+            MapOriginLatitude = fallbackOriginLatitude;
+            MapOriginLongitude = fallbackOriginLongitude;
+            MapMin = Vector2.zero;
+            MapMax = new Vector2(100f, 100f);
+
+            var hasCafeData = TryLoadCafePositions(out var allCafes, out var positions, out var originLat, out var originLon);
             if (hasCafeData)
             {
-                UpdateMapBoundsFromCafes(cafePositions.Values);
-            }
-
-            int techCount = UnityEngine.Random.Range(4, 7);
-            var availableIndices = Enumerable.Range(0, TechnicianNames.Length).OrderBy(_ => UnityEngine.Random.value).ToList();
-            for (int i = 0; i < techCount; i++)
-            {
-                string name = TechnicianNames[availableIndices[i % TechnicianNames.Length]];
-                Technician tech = new()
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Name = name,
-                    Skills = GenerateRandomSkills(),
-                    MapPosition = GenerateRandomPosition(),
-                    Status = TechnicianStatus.Available,
-                    Address = TechnicianAddresses[UnityEngine.Random.Range(0, TechnicianAddresses.Length)],
-                    Phone = TechnicianPhones[UnityEngine.Random.Range(0, TechnicianPhones.Length)],
-                    PlannedHoursToday = UnityEngine.Random.Range(3f, 9f),
-                    ExpectedHoursToday = UnityEngine.Random.Range(6f, 9f)
-                };
-                tech.EnsureSkillProficiencyEntries();
-                Technicians.Add(tech);
-            }
-
-            if (hasCafeData)
-            {
-                CreateJobsFromCafes(cafeJobs, cafePositions);
+                CafeSites = allCafes;
+                cafePositions = positions;
+                MapOriginLatitude = originLat;
+                MapOriginLongitude = originLon;
+                UpdateMapBoundsFromCafes(positions.Values);
+                CreateTechniciansFromSites(allCafes, positions);
+                CreateJobsFromCafes(allCafes, positions);
             }
             else
             {
-                int jobCount = UnityEngine.Random.Range(8, 13);
-                for (int i = 0; i < jobCount; i++)
-                {
-                    JobTicket job = new()
-                    {
-                        Id = Guid.NewGuid().ToString(),
-                        Title = JobTitles[UnityEngine.Random.Range(0, JobTitles.Length)],
-                        ClientName = ClientNames[UnityEngine.Random.Range(0, ClientNames.Length)],
-                        MapPosition = GenerateRandomPosition(),
-                        RequiredSkills = GenerateRandomSkills(),
-                        EstimatedDurationHours = UnityEngine.Random.Range(1f, 6.5f),
-                        Priority = (JobPriority)UnityEngine.Random.Range(0, Enum.GetValues(typeof(JobPriority)).Length),
-                        Status = JobStatus.Unassigned,
-                        Address = $"{UnityEngine.Random.Range(10, 999)} Dispatch Lane",
-                        DetailedDescription = "Auto-generated task description for testing."
-                    };
-                    job.EnsureRequiredSkillToggles();
-                    Jobs.Add(job);
-                }
+                CreateRandomTechnicians();
+                CreateRandomJobs();
             }
         }
 
@@ -138,6 +117,15 @@ namespace DispatchQuest.Managers
             return new Vector2(
                 UnityEngine.Random.Range(MapMin.x, MapMax.x),
                 UnityEngine.Random.Range(MapMin.y, MapMax.y));
+        }
+
+        private (double lat, double lon) LocalToLatLon(Vector2 mapPosition)
+        {
+            const double earthRadiusMeters = 6371000.0;
+            double originLatRad = MapOriginLatitude * Math.PI / 180.0;
+            double lat = MapOriginLatitude + (mapPosition.y / earthRadiusMeters) * (180.0 / Math.PI);
+            double lon = MapOriginLongitude + (mapPosition.x / (earthRadiusMeters * Math.Cos(originLatRad))) * (180.0 / Math.PI);
+            return (lat, lon);
         }
 
         private List<string> GenerateRandomSkills()
@@ -150,6 +138,176 @@ namespace DispatchQuest.Managers
                 list.Add(shuffled[i]);
             }
             return list;
+        }
+
+        private void CreateTechniciansFromSites(List<Cafe> cafes, Dictionary<Cafe, Vector2> positions)
+        {
+            if (cafes == null || positions == null || cafes.Count == 0) return;
+
+            int techCount = Mathf.Clamp(UnityEngine.Random.Range(4, 7), 1, cafes.Count);
+            var availableIndices = Enumerable.Range(0, TechnicianNames.Length).OrderBy(_ => UnityEngine.Random.value).ToList();
+            var shuffledSites = cafes.OrderBy(_ => UnityEngine.Random.value).ToList();
+
+            for (int i = 0; i < techCount && i < shuffledSites.Count; i++)
+            {
+                var cafe = shuffledSites[i];
+                if (!positions.TryGetValue(cafe, out var mapPos)) continue;
+
+                Technician tech = new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = TechnicianNames[availableIndices[i % TechnicianNames.Length]],
+                    Skills = GenerateRandomSkills(),
+                    MapPosition = mapPos,
+                    Latitude = cafe.lat,
+                    Longitude = cafe.lon,
+                    Status = TechnicianStatus.Available,
+                    Address = string.IsNullOrWhiteSpace(cafe.address) ? cafe.ComposeAddress() : cafe.address,
+                    Phone = TechnicianPhones[UnityEngine.Random.Range(0, TechnicianPhones.Length)],
+                    PlannedHoursToday = UnityEngine.Random.Range(3f, 9f),
+                    ExpectedHoursToday = UnityEngine.Random.Range(6f, 9f)
+                };
+                tech.EnsureSkillProficiencyEntries();
+                Technicians.Add(tech);
+            }
+        }
+
+        private void CreateRandomTechnicians()
+        {
+            int techCount = UnityEngine.Random.Range(4, 7);
+            var availableIndices = Enumerable.Range(0, TechnicianNames.Length).OrderBy(_ => UnityEngine.Random.value).ToList();
+
+            for (int i = 0; i < techCount; i++)
+            {
+                var mapPos = GenerateRandomPosition();
+                var (lat, lon) = LocalToLatLon(mapPos);
+
+                Technician tech = new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = TechnicianNames[availableIndices[i % TechnicianNames.Length]],
+                    Skills = GenerateRandomSkills(),
+                    MapPosition = mapPos,
+                    Latitude = lat,
+                    Longitude = lon,
+                    Status = TechnicianStatus.Available,
+                    Address = TechnicianAddresses[UnityEngine.Random.Range(0, TechnicianAddresses.Length)],
+                    Phone = TechnicianPhones[UnityEngine.Random.Range(0, TechnicianPhones.Length)],
+                    PlannedHoursToday = UnityEngine.Random.Range(3f, 9f),
+                    ExpectedHoursToday = UnityEngine.Random.Range(6f, 9f)
+                };
+                tech.EnsureSkillProficiencyEntries();
+                Technicians.Add(tech);
+            }
+        }
+
+        private void CreateRandomJobs()
+        {
+            int jobCount = UnityEngine.Random.Range(8, 13);
+            for (int i = 0; i < jobCount; i++)
+            {
+                var mapPos = GenerateRandomPosition();
+                var (lat, lon) = LocalToLatLon(mapPos);
+
+                JobTicket job = new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = JobTitles[UnityEngine.Random.Range(0, JobTitles.Length)],
+                    ClientName = ClientNames[UnityEngine.Random.Range(0, ClientNames.Length)],
+                    MapPosition = mapPos,
+                    Latitude = lat,
+                    Longitude = lon,
+                    RequiredSkills = GenerateRandomSkills(),
+                    EstimatedDurationHours = UnityEngine.Random.Range(1f, 6.5f),
+                    Priority = (JobPriority)UnityEngine.Random.Range(0, Enum.GetValues(typeof(JobPriority)).Length),
+                    Status = JobStatus.Unassigned,
+                    Address = $"{UnityEngine.Random.Range(10, 999)} Dispatch Lane",
+                    DetailedDescription = "Auto-generated task description for testing."
+                };
+                job.EnsureRequiredSkillToggles();
+                Jobs.Add(job);
+            }
+        }
+
+        private bool TryLoadCafePositions(out List<Cafe> cafes, out Dictionary<Cafe, Vector2> positions, out double originLat, out double originLon)
+        {
+            cafes = null;
+            positions = null;
+            originLat = MapOriginLatitude;
+            originLon = MapOriginLongitude;
+
+            var db = CafeDatabaseLoader.Database ?? CafeDatabaseLoader.LoadFromResources();
+            if (db?.cafes == null || db.cafes.Count == 0)
+            {
+                return false;
+            }
+
+            var validCafes = db.cafes
+                .Where(c => !double.IsNaN(c.lat) && !double.IsNaN(c.lon))
+                .ToList();
+
+            if (validCafes.Count == 0)
+            {
+                return false;
+            }
+
+            originLat = validCafes.Average(c => c.lat);
+            originLon = validCafes.Average(c => c.lon);
+
+            positions = new Dictionary<Cafe, Vector2>();
+            foreach (var cafe in validCafes)
+            {
+                positions[cafe] = LatLonMapper.ToLocalXY(originLat, originLon, cafe.lat, cafe.lon);
+            }
+
+            cafes = validCafes;
+            return cafes.Count > 0 && positions.Count > 0;
+        }
+
+        private void CreateJobsFromCafes(List<Cafe> cafes, Dictionary<Cafe, Vector2> positions)
+        {
+            var jobCandidates = cafes
+                .OrderBy(_ => UnityEngine.Random.value)
+                .Take(Mathf.Min(maxCafeJobs, cafes.Count))
+                .ToList();
+
+            foreach (var cafe in jobCandidates)
+            {
+                if (!positions.TryGetValue(cafe, out var mapPosition))
+                {
+                    continue;
+                }
+
+                var amenity = cafe.TagLookup != null && cafe.TagLookup.TryGetValue("amenity", out var amenityValue)
+                    ? amenityValue
+                    : null;
+
+                var amenity = cafe.TagLookup != null && cafe.TagLookup.TryGetValue("amenity", out var amenityValue)
+                    ? amenityValue
+                    : null;
+
+                JobTicket job = new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = $"{JobTitles[UnityEngine.Random.Range(0, JobTitles.Length)]} @ {cafe.name ?? cafe.brand ?? "Cafe"}",
+                    ClientName = !string.IsNullOrWhiteSpace(cafe.name) ? cafe.name : cafe.brand ?? "Cafe Client",
+                    MapPosition = mapPosition,
+                    Latitude = cafe.lat,
+                    Longitude = cafe.lon,
+                    RequiredSkills = GenerateRandomSkills(),
+                    EstimatedDurationHours = UnityEngine.Random.Range(1f, 6.5f),
+                    Priority = (JobPriority)UnityEngine.Random.Range(0, Enum.GetValues(typeof(JobPriority)).Length),
+                    Status = JobStatus.Unassigned,
+                    Address = string.IsNullOrWhiteSpace(cafe.address) ? cafe.ComposeAddress() : cafe.address,
+                    DetailedDescription = !string.IsNullOrWhiteSpace(amenity)
+                        ? amenity
+                        : cafe.name ?? cafe.brand ?? "Maintenance Task",
+                    Notes = BuildCafeNotes(cafe)
+                };
+
+                job.EnsureRequiredSkillToggles();
+                Jobs.Add(job);
+            }
         }
 
         public void AssignJobToTechnician(JobTicket job, Technician technician)
@@ -190,82 +348,6 @@ namespace DispatchQuest.Managers
         public void NotifyDataChanged()
         {
             OnDataChanged?.Invoke();
-        }
-
-        private bool TryGetCafeJobCandidates(out List<Cafe> cafes, out Dictionary<Cafe, Vector2> positions)
-        {
-            cafes = null;
-            positions = null;
-
-            var db = CafeDatabaseLoader.Database ?? CafeDatabaseLoader.LoadFromResources();
-            if (db?.cafes == null || db.cafes.Count == 0)
-            {
-                return false;
-            }
-
-            var validCafes = db.cafes
-                .Where(c => !double.IsNaN(c.lat) && !double.IsNaN(c.lon))
-                .ToList();
-
-            if (validCafes.Count == 0)
-            {
-                return false;
-            }
-
-            double originLat = validCafes.Average(c => c.lat);
-            double originLon = validCafes.Average(c => c.lon);
-
-            positions = new Dictionary<Cafe, Vector2>();
-            foreach (var cafe in validCafes)
-            {
-                positions[cafe] = LatLonMapper.ToLocalXY(originLat, originLon, cafe.lat, cafe.lon);
-            }
-
-            cafes = validCafes
-                .OrderBy(_ => UnityEngine.Random.value)
-                .Take(Mathf.Min(maxCafeJobs, validCafes.Count))
-                .ToList();
-
-            return cafes.Count > 0 && positions.Count > 0;
-        }
-
-        private void CreateJobsFromCafes(List<Cafe> cafes, Dictionary<Cafe, Vector2> positions)
-        {
-            foreach (var cafe in cafes)
-            {
-                if (!positions.TryGetValue(cafe, out var mapPosition))
-                {
-                    continue;
-                }
-
-                var jitter = UnityEngine.Random.insideUnitCircle * cafeLocationJitterMeters;
-                Vector2 finalPosition = mapPosition + jitter;
-
-                var amenity = cafe.TagLookup != null && cafe.TagLookup.TryGetValue("amenity", out var amenityValue)
-                    ? amenityValue
-                    : null;
-
-                JobTicket job = new()
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Title = $"{JobTitles[UnityEngine.Random.Range(0, JobTitles.Length)]} @ {cafe.name ?? cafe.brand ?? "Cafe"}",
-                    ClientName = !string.IsNullOrWhiteSpace(cafe.name) ? cafe.name : cafe.brand ?? "Cafe Client",
-                    MapPosition = finalPosition,
-                    RequiredSkills = GenerateRandomSkills(),
-                    EstimatedDurationHours = UnityEngine.Random.Range(1f, 6.5f),
-                    Priority = (JobPriority)UnityEngine.Random.Range(0, Enum.GetValues(typeof(JobPriority)).Length),
-                    Status = JobStatus.Unassigned,
-                    Address = cafe.address,
-                    DetailedDescription = !string.IsNullOrWhiteSpace(amenity)
-                        ? amenity
-                        : cafe.name ?? cafe.brand ?? "Maintenance Task",
-                    Notes = BuildCafeNotes(cafe)
-                };
-
-                job.EnsureRequiredSkillToggles();
-
-                Jobs.Add(job);
-            }
         }
 
         private List<JobNote> BuildCafeNotes(Cafe cafe)

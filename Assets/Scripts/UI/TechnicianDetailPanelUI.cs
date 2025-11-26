@@ -36,6 +36,15 @@ namespace DispatchQuest.UI
 
         private Technician _currentTechnician;
 
+        public bool IsVisible => panelRoot != null && panelRoot.activeSelf;
+
+        public bool IsPointerOver(Vector2 screenPosition)
+        {
+            if (panelRoot == null) return false;
+            var rect = panelRoot.GetComponent<RectTransform>();
+            return rect != null && RectTransformUtility.RectangleContainsScreenPoint(rect, screenPosition);
+        }
+
         public void ShowTechnician(Technician tech)
         {
             _currentTechnician = tech;

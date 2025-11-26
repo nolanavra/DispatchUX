@@ -23,6 +23,15 @@ namespace DispatchQuest.UI
         private Technician _currentTechnician;
         private readonly List<GameObject> _spawnedNotes = new();
 
+        public bool IsVisible => PanelRoot != null && PanelRoot.activeSelf;
+
+        public bool IsPointerOver(Vector2 screenPosition)
+        {
+            if (PanelRoot == null) return false;
+            var rect = PanelRoot.GetComponent<RectTransform>();
+            return rect != null && RectTransformUtility.RectangleContainsScreenPoint(rect, screenPosition);
+        }
+
         private void Awake()
         {
             if (AddNoteButton != null)

@@ -32,7 +32,9 @@ A Unity 2D desktop-focused dispatch tool prototype with a strategy-UI aesthetic.
 5. **Map Panel**
    - Create **Technician Marker** prefab (Image + TMP label) with `TechnicianMarker` component (implements drop target).
    - Create **Job Marker** prefab (Image + TMP label) with `JobMarker` component.
-   - Add `MapViewController` to the map panel. Assign **DispatchDataManager**, **MapArea** (RectTransform of panel), and both marker prefabs.
+   - Create a **Site Marker** prefab (Image + TMP label) with `SiteMarker` for showing imported cafe / business locations.
+   - Add `CafeDatabaseLoader` to the scene (or Resources) so cafe/business JSON is available at runtime.
+   - Add `MapViewController` to the map panel. Assign **DispatchDataManager**, **MapArea** (RectTransform of panel), and all three marker prefabs (site, technician, job). The controller now projects every cafe/business from the dataset plus generated technicians and jobs using their latitude/longitude so map positions match real-world spacing.
 
 6. **Timeline Panel**
    - Create **Technician Row** prefab containing a `TechLabel` TMP text and a `Jobs` container with Horizontal Layout Group.
@@ -94,3 +96,7 @@ A Unity 2D desktop-focused dispatch tool prototype with a strategy-UI aesthetic.
 6. **Notes and Required Skills UI**
    - Place `RequiredSkillToggleUI` inside a vertical/horizontal layout group under the Job detail’s **requiredSkillsContainer**; toggling updates the underlying `RequiredSkillToggle` data.
    - Place `NoteEntryUI` prefabs under each panel’s notes container to display ordered job/technician notes. Use the Communication panel to add new notes; the detail panels simply display them.
+
+## Real-World Map Seeding
+- When a `CafeDatabaseLoader` is present (or Resources/cafes.json is available), `DispatchDataManager` seeds technicians and jobs from the imported latitude/longitude data and projects every site onto the map with consistent bounds.
+- `MapViewController` now spawns **SiteMarker** instances for every cafe/business entry alongside technician and job markers so the canvas reflects real-world spacing instead of placeholder 0–100 coordinates.
