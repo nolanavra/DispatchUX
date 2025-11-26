@@ -1,11 +1,13 @@
 using DispatchQuest.Data;
+using DispatchQuest.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DispatchQuest.Map
 {
-    public class JobMarker : MonoBehaviour
+    public class JobMarker : MonoBehaviour, IPointerClickHandler
     {
         public TMP_Text LabelText;
         public Image Icon;
@@ -13,6 +15,12 @@ namespace DispatchQuest.Map
         public Color AssignedColor = new(0.2f, 0.7f, 0.25f, 0.9f);
 
         [HideInInspector] public JobTicket Job;
+        [SerializeField] private JobDetailPanelUI jobDetailPanel;
+
+        public void SetDetailPanel(JobDetailPanelUI panel)
+        {
+            jobDetailPanel = panel;
+        }
 
         public void Bind(JobTicket job)
         {
@@ -31,6 +39,14 @@ namespace DispatchQuest.Map
             if (Icon != null)
             {
                 Icon.color = Job.AssignedTechnician == null ? UnassignedColor : AssignedColor;
+            }
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (jobDetailPanel != null && Job != null)
+            {
+                jobDetailPanel.ShowJob(Job);
             }
         }
     }

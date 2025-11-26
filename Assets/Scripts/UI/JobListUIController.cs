@@ -15,6 +15,7 @@ namespace DispatchQuest.UI
         public JobRecommendationService RecommendationService;
         public TechnicianHighlightController HighlightController;
         public CommunicationPanelUI CommunicationPanel;
+        public JobDetailPanelUI JobDetailPanel;
 
         private readonly List<JobCardUI> _spawnedCards = new();
 
@@ -64,6 +65,7 @@ namespace DispatchQuest.UI
                 card.RecommendationService = RecommendationService;
                 card.HighlightController = HighlightController;
                 card.CommunicationPanel = CommunicationPanel;
+                card.JobDetailPanel = JobDetailPanel;
                 card.Bind(job, DataManager);
                 _spawnedCards.Add(card);
             }
