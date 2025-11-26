@@ -25,25 +25,86 @@ namespace DispatchQuest.Data
         public static CafeDatabase FromJson(string json)
         {
             var db = new CafeDatabase();
-            var root = MiniJSON.Deserialize(json) as Dictionary<string, object>;
-            if (root == null || !root.TryGetValue("cafes", out var cafesObj))
+            if (string.IsNullOrWhiteSpace(json))
             {
-                Debug.LogWarning("Cafe JSON did not contain a 'cafes' array.");
+                Debug.LogWarning("Cafe JSON text was empty or null.");
                 return db;
             }
 
-            if (cafesObj is List<object> list)
+            // First try MiniJSON so we can hydrate the tags dictionary coming from OSM.
+            var parsed = MiniJSON.Deserialize(json);
+            if (parsed != null)
             {
-                foreach (var entry in list)
+                if (parsed is Dictionary<string, object> root)
                 {
-                    if (entry is Dictionary<string, object> cafeDict)
+                    // Primary expected shape
+                    if (TryAddCafesFromList(root, "cafes", db))
                     {
-                        db.cafes.Add(Cafe.FromDictionary(cafeDict));
+                        db.Initialize();
+                        return db;
+                    }
+
+                    // Overpass API shape (elements array)
+                    if (TryAddCafesFromList(root, "elements", db))
+                    {
+                        db.Initialize();
+                        return db;
                     }
                 }
+                else if (parsed is List<object> arrayRoot)
+                {
+                    // Allow raw array files without a wrapper object.
+                    AddCafeEntries(arrayRoot, db);
+                    db.Initialize();
+                    return db;
+                }
             }
-            db.Initialize();
+
+            // Fallback: attempt JsonUtility in case MiniJSON failed unexpectedly.
+            try
+            {
+                var wrapper = JsonUtility.FromJson<CafeDatabaseWrapper>(json);
+                if (wrapper?.cafes != null && wrapper.cafes.Count > 0)
+                {
+                    db.cafes = wrapper.cafes;
+                    db.Initialize();
+                    return db;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Cafe JSON fallback parsing failed: {ex.Message}");
+            }
+
+            Debug.LogWarning("Cafe JSON did not contain a recognizable cafe array ('cafes', 'elements', or top-level array').");
             return db;
+        }
+
+        private static bool TryAddCafesFromList(Dictionary<string, object> root, string key, CafeDatabase db)
+        {
+            if (root.TryGetValue(key, out var listObj) && listObj is List<object> list)
+            {
+                AddCafeEntries(list, db);
+                return db.cafes.Count > 0;
+            }
+            return false;
+        }
+
+        private static void AddCafeEntries(IEnumerable<object> entries, CafeDatabase db)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry is Dictionary<string, object> cafeDict)
+                {
+                    db.cafes.Add(Cafe.FromDictionary(cafeDict));
+                }
+            }
+        }
+
+        [Serializable]
+        private class CafeDatabaseWrapper
+        {
+            public List<Cafe> cafes;
         }
     }
 
