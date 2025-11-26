@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DispatchQuest.UI
 {
@@ -15,15 +16,18 @@ namespace DispatchQuest.UI
 
         private void Update()
         {
-            if (Input.GetMouseButtonDown(1))
+            var mouse = Mouse.current;
+            if (mouse == null) return;
+
+            if (mouse.rightButton.wasPressedThisFrame)
             {
                 HideAllPanels();
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if (mouse.leftButton.wasPressedThisFrame)
             {
-                Vector2 clickPos = Input.mousePosition;
+                Vector2 clickPos = mouse.position.ReadValue();
                 if (!IsPointerOverAnyPanel(clickPos))
                 {
                     HideAllPanels();
