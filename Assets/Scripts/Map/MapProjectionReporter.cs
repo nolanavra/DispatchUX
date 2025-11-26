@@ -1,6 +1,7 @@
 using DispatchQuest.Managers;
 using TMPro;
 using UnityEngine;
+using DispatchQuest.MapSDK;
 
 namespace DispatchQuest.Map
 {
@@ -14,11 +15,15 @@ namespace DispatchQuest.Map
         [SerializeField] private DispatchDataManager dataManager;
         [SerializeField] private RectTransform mapArea;
         [SerializeField] private TMP_Text cornerReadout;
+        [Header("Tile Sync")]
+        [SerializeField] private MapController tileController;
+        [SerializeField] private RectTransform tileContainer;
 
         public (double lat, double lon) SouthWest { get; private set; }
         public (double lat, double lon) NorthWest { get; private set; }
         public (double lat, double lon) NorthEast { get; private set; }
         public (double lat, double lon) SouthEast { get; private set; }
+        public (double lat, double lon) Center { get; private set; }
 
         private void OnEnable()
         {
@@ -51,12 +56,34 @@ namespace DispatchQuest.Map
             NorthWest = dataManager.MapToLatLon(new Vector2(min.x, max.y));
             NorthEast = dataManager.MapToLatLon(new Vector2(max.x, max.y));
             SouthEast = dataManager.MapToLatLon(new Vector2(max.x, min.y));
+            Center = dataManager.MapToLatLon((min + max) * 0.5f);
+
+            SyncTileContainer();
+            if (tileController != null)
+            {
+                tileController.SetCenter(Center.lat, Center.lon);
+            }
 
             if (cornerReadout != null)
             {
                 cornerReadout.text =
                     $"NW: {FormatLatLon(NorthWest)}\nNE: {FormatLatLon(NorthEast)}\nSW: {FormatLatLon(SouthWest)}\nSE: {FormatLatLon(SouthEast)}";
             }
+        }
+
+        private void SyncTileContainer()
+        {
+            if (tileContainer == null || mapArea == null)
+            {
+                return;
+            }
+
+            tileContainer.anchorMin = Vector2.zero;
+            tileContainer.anchorMax = Vector2.one;
+            tileContainer.offsetMin = Vector2.zero;
+            tileContainer.offsetMax = Vector2.zero;
+            tileContainer.SetParent(mapArea, false);
+            tileContainer.SetSiblingIndex(0);
         }
 
         public Vector2 LatLonToAnchoredPosition(double latitude, double longitude)
