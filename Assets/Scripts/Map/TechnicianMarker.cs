@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace DispatchQuest.Map
 {
-    public class TechnicianMarker : MonoBehaviour, IDropHandler
+    public class TechnicianMarker : MonoBehaviour, IDropHandler, IPointerClickHandler
     {
         public TMP_Text LabelText;
         public Image Icon;
@@ -19,6 +19,12 @@ namespace DispatchQuest.Map
 
         [HideInInspector] public Technician Technician;
         [HideInInspector] public DispatchDataManager DataManager;
+        [SerializeField] private TechnicianDetailPanelUI technicianDetailPanel;
+
+        public void SetDetailPanel(TechnicianDetailPanelUI panel)
+        {
+            technicianDetailPanel = panel;
+        }
 
         private Color _baseColor;
 
@@ -62,6 +68,14 @@ namespace DispatchQuest.Map
             var card = eventData.pointerDrag ? eventData.pointerDrag.GetComponent<JobCardUI>() : null;
             if (card == null || card.Job == null) return;
             DataManager.AssignJobToTechnician(card.Job, Technician);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (technicianDetailPanel != null && Technician != null)
+            {
+                technicianDetailPanel.ShowTechnician(Technician);
+            }
         }
     }
 }
