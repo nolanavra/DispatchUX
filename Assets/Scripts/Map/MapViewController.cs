@@ -4,6 +4,7 @@ using DispatchQuest.Data;
 using DispatchQuest.Managers;
 using DispatchQuest.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DispatchQuest.Map
 {
@@ -17,6 +18,8 @@ namespace DispatchQuest.Map
         public TechnicianDetailPanelUI TechnicianDetailPanel;
         public JobDetailPanelUI JobDetailPanel;
         public MapProjectionReporter ProjectionReporter;
+        [Header("Map Tile Wiring")]
+        [SerializeField] private RectTransform tileContainer;
 
         private readonly List<SiteMarker> _siteMarkers = new();
         private readonly List<TechnicianMarker> _techMarkers = new();
@@ -26,6 +29,7 @@ namespace DispatchQuest.Map
 
         private void Start()
         {
+            AttachTileContainer();
             BuildMarkers();
             if (DataManager != null)
             {
@@ -159,6 +163,32 @@ namespace DispatchQuest.Map
                 if (marker != null) Destroy(marker.gameObject);
             }
             _jobMarkers.Clear();
+        }
+
+        private void AttachTileContainer()
+        {
+            if (MapArea == null)
+            {
+                return;
+            }
+
+            // Keep the tile layer clipped to the map panel without relying on scene-time wiring.
+            if (MapArea.GetComponent<RectMask2D>() == null)
+            {
+                MapArea.gameObject.AddComponent<RectMask2D>();
+            }
+
+            if (tileContainer == null)
+            {
+                return;
+            }
+
+            tileContainer.SetParent(MapArea, false);
+            tileContainer.anchorMin = Vector2.zero;
+            tileContainer.anchorMax = Vector2.one;
+            tileContainer.offsetMin = Vector2.zero;
+            tileContainer.offsetMax = Vector2.zero;
+            tileContainer.SetSiblingIndex(0);
         }
 
         private void SetMarkerPosition(RectTransform rect, Vector2 mapPosition)
