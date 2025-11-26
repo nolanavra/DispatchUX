@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CafeDatabase",
+  "type": "object",
+  "properties": {
+    "cafes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "brand": {"type": "string"},
+          "branch": {"type": "string"},
+          "address": {"type": "string"},
+          "city": {"type": "string"},
+          "postcode": {"type": "string"},
+          "lat": {"type": "number"},
+          "lon": {"type": "number"},
+          "tags": {
+            "type": "object",
+            "additionalProperties": {"type": "string"}
+          }
+        },
+        "required": ["id", "name", "lat", "lon", "tags"]
+      }
+    }
+  },
+  "required": ["cafes"]
+}

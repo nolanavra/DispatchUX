@@ -1,0 +1,64 @@
+{
+  "cafes": [
+    {
+      "id": "node/999001",
+      "name": "Public Espresso",
+      "brand": "Public Espresso",
+      "branch": "Downtown",
+      "address": "391 Washington St, Buffalo, NY 14203",
+      "city": "Buffalo",
+      "postcode": "14203",
+      "lat": 42.884889,
+      "lon": -78.872238,
+      "tags": {
+        "amenity": "cafe",
+        "name": "Public Espresso",
+        "brand": "Public Espresso",
+        "addr:housenumber": "391",
+        "addr:street": "Washington St",
+        "addr:city": "Buffalo",
+        "addr:postcode": "14203"
+      }
+    },
+    {
+      "id": "node/999002",
+      "name": "Starbucks",
+      "brand": "Starbucks",
+      "branch": "Elmwood",
+      "address": "933 Elmwood Ave, Buffalo, NY 14222",
+      "city": "Buffalo",
+      "postcode": "14222",
+      "lat": 42.915316,
+      "lon": -78.877937,
+      "tags": {
+        "amenity": "cafe",
+        "brand": "Starbucks",
+        "name": "Starbucks",
+        "addr:housenumber": "933",
+        "addr:street": "Elmwood Ave",
+        "addr:city": "Buffalo",
+        "addr:postcode": "14222"
+      }
+    },
+    {
+      "id": "node/999003",
+      "name": "Spot Coffee",
+      "brand": "Spot Coffee",
+      "branch": "Delaware",
+      "address": "227 Delaware Ave, Buffalo, NY 14202",
+      "city": "Buffalo",
+      "postcode": "14202",
+      "lat": 42.890846,
+      "lon": -78.873985,
+      "tags": {
+        "amenity": "cafe",
+        "name": "Spot Coffee",
+        "brand": "Spot Coffee",
+        "addr:housenumber": "227",
+        "addr:street": "Delaware Ave",
+        "addr:city": "Buffalo",
+        "addr:postcode": "14202"
+      }
+    }
+  ]
+}
