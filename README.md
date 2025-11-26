@@ -70,3 +70,27 @@ A Unity 2D desktop-focused dispatch tool prototype with a strategy-UI aesthetic.
    - Add `RoutePlannerService` to the scene and assign **DispatchDataManager**.
    - Create a UI button labeled “Generate Daily Routes”; attach `RoutePlanningController` to the same GameObject, assign **routePlannerService** (and optionally a `TechnicianHighlightController` to clear highlights), then wire the button’s OnClick to `RoutePlanningController.GenerateRoutes`.
    - Ensure `TimelineUIController` is already referencing **DispatchDataManager**, row/job prefabs, and content root; it will reorder jobs when `DispatchDataManager.OnRoutesGenerated` fires after route planning.
+
+## Phase 3 Wiring (Detail Panels)
+1. **Create Detail Panels**
+   - Under the main Canvas, add **TechnicianDetailPanel** and **JobDetailPanel** GameObjects. Attach `TechnicianDetailPanelUI` and `JobDetailPanelUI` respectively and assign their **panelRoot** fields to the panel GameObjects.
+   - For each panel, wire TMP text fields, scroll content roots, and prefabs: `SkillEntryUI`, `AssignedJobEntryUI`, `RequiredSkillToggleUI`, and `NoteEntryUI`.
+
+2. **Communication Panel Hooks**
+   - Drag the shared `CommunicationPanelUI` into the **communicationPanel** field on both detail panels.
+   - Add buttons to the panels if desired and hook them to `TechnicianDetailPanelUI.OnOpenCommunicationForTechnician` and `JobDetailPanelUI.OnOpenCommunicationForJob/OnOpenCommunicationForTechnician`.
+
+3. **List Controllers and Cards**
+   - In `TechnicianListUIController`, assign the **TechnicianDetailPanel** reference so spawned `TechnicianCardUI` instances can open it on click.
+   - In `JobListUIController`, assign **JobDetailPanel** and ensure the Job Card prefab has its `JobCardUI.JobDetailPanel` field exposed (the controller fills it at runtime).
+
+4. **Map Markers**
+   - On `MapViewController`, set **TechnicianDetailPanel** and **JobDetailPanel** references. Marker prefabs should include `TechnicianMarker` and `JobMarker` components; leave their panel references empty so the controller injects them when instantiating.
+   - Confirm markers have raycast targets so `IPointerClickHandler` events fire and open the panels.
+
+5. **Timeline Blocks**
+   - Assign **JobDetailPanel** on `TimelineUIController` and ensure the Job Block prefab’s click handler (Button or EventTrigger) calls `TimelineJobBlockUI.OnClick` to show job details.
+
+6. **Notes and Required Skills UI**
+   - Place `RequiredSkillToggleUI` inside a vertical/horizontal layout group under the Job detail’s **requiredSkillsContainer**; toggling updates the underlying `RequiredSkillToggle` data.
+   - Place `NoteEntryUI` prefabs under each panel’s notes container to display ordered job/technician notes. Use the Communication panel to add new notes; the detail panels simply display them.

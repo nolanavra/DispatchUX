@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace DispatchQuest.UI
 {
-    public class TechnicianCardUI : MonoBehaviour, IDropHandler
+    public class TechnicianCardUI : MonoBehaviour, IDropHandler, IPointerClickHandler
     {
         [Header("UI References")]
         public TMP_Text NameText;
@@ -18,6 +18,7 @@ namespace DispatchQuest.UI
         public Image HighlightFrame;
         public Button NotesButton;
         public TechnicianWorkloadMeterUI WorkloadMeter;
+        public TechnicianDetailPanelUI TechnicianDetailPanel;
 
         public Color AvailableColor = new(0.2f, 0.4f, 0.2f, 0.85f);
         public Color BusyColor = new(0.5f, 0.3f, 0.1f, 0.85f);
@@ -90,6 +91,14 @@ namespace DispatchQuest.UI
         {
             if (CommunicationPanel == null || Technician == null) return;
             CommunicationPanel.ShowForTechnician(Technician);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (TechnicianDetailPanel != null && Technician != null)
+            {
+                TechnicianDetailPanel.ShowTechnician(Technician);
+            }
         }
     }
 }
