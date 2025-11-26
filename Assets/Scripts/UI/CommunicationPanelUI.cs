@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using DispatchQuest.Data;
 using TMPro;
 using UnityEngine;
@@ -84,16 +86,24 @@ namespace DispatchQuest.UI
             }
             _spawnedNotes.Clear();
 
-            List<string> notes = _currentJob != null ? _currentJob.Notes : _currentTechnician?.Notes;
+            List<JobNote> notes = _currentJob != null ? _currentJob.Notes : _currentTechnician?.Notes;
             if (notes == null || NoteEntryPrefab == null || NotesContentRoot == null) return;
 
-            foreach (var note in notes)
+            foreach (var note in notes.OrderBy(n => n?.timestamp))
             {
                 var go = Instantiate(NoteEntryPrefab, NotesContentRoot);
-                var text = go.GetComponentInChildren<TMP_Text>();
-                if (text != null)
+                var noteUI = go.GetComponent<NoteEntryUI>();
+                if (noteUI != null)
                 {
-                    text.text = note;
+                    noteUI.SetData(note);
+                }
+                else
+                {
+                    var text = go.GetComponentInChildren<TMP_Text>();
+                    if (text != null && note != null)
+                    {
+                        text.text = $"[{note.timestamp:G}] {note.author}: {note.text}";
+                    }
                 }
                 _spawnedNotes.Add(go);
             }
@@ -104,14 +114,25 @@ namespace DispatchQuest.UI
             string noteText = InputField != null ? InputField.text : string.Empty;
             if (string.IsNullOrWhiteSpace(noteText)) return;
 
+            var note = new JobNote
+            {
+                author = "Dispatcher",
+                technicianId = _currentTechnician != null ? _currentTechnician.Id : string.Empty,
+                text = noteText.Trim(),
+                timestamp = DateTime.Now
+            };
+
             if (_currentJob != null)
             {
-                _currentJob.Notes.Add(noteText.Trim());
+                _currentJob.Notes ??= new List<JobNote>();
+                _currentJob.Notes.Add(note);
             }
             else if (_currentTechnician != null)
             {
-                _currentTechnician.Notes.Add(noteText.Trim());
+                _currentTechnician.Notes ??= new List<JobNote>();
+                _currentTechnician.Notes.Add(note);
             }
+
             if (InputField != null)
             {
                 InputField.text = string.Empty;

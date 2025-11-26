@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DispatchQuest.Data;
 using DispatchQuest.Managers;
+using DispatchQuest.UI;
 using UnityEngine;
 
 namespace DispatchQuest.Map
@@ -12,6 +13,8 @@ namespace DispatchQuest.Map
         public RectTransform MapArea;
         public GameObject TechnicianMarkerPrefab;
         public GameObject JobMarkerPrefab;
+        public TechnicianDetailPanelUI TechnicianDetailPanel;
+        public JobDetailPanelUI JobDetailPanel;
 
         private readonly List<TechnicianMarker> _techMarkers = new();
         private readonly List<JobMarker> _jobMarkers = new();
@@ -51,6 +54,7 @@ namespace DispatchQuest.Map
             {
                 var go = Instantiate(TechnicianMarkerPrefab, MapArea);
                 var marker = go.GetComponent<TechnicianMarker>();
+                marker.SetDetailPanel(TechnicianDetailPanel);
                 marker.Bind(tech, DataManager);
                 _techMarkers.Add(marker);
                 SetMarkerPosition(go.GetComponent<RectTransform>(), tech.MapPosition);
@@ -60,6 +64,7 @@ namespace DispatchQuest.Map
             {
                 var go = Instantiate(JobMarkerPrefab, MapArea);
                 var marker = go.GetComponent<JobMarker>();
+                marker.SetDetailPanel(JobDetailPanel);
                 marker.Bind(job);
                 _jobMarkers.Add(marker);
                 SetMarkerPosition(go.GetComponent<RectTransform>(), job.MapPosition);
